@@ -1,4 +1,17 @@
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { getAuthToken } from "./authApi";
+
+function withAuthHeaders(baseHeaders = {}) {
+    const token = getAuthToken();
+    if (!token) {
+        return baseHeaders;
+    }
+
+    return {
+        ...baseHeaders,
+        Authorization: `Bearer ${token}`,
+    };
+}
 
 /**
  * Add a new encrypted password to the vault
@@ -10,9 +23,9 @@ export async function addVaultItem(encryptedPayload) {
     const res = await fetch(`${API}/api/vault`, {
         method: "POST",
         credentials: "include",
-        headers: {
+        headers: withAuthHeaders({
             "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify(encryptedPayload),
     });
 
@@ -34,9 +47,9 @@ export async function fetchVault() {
     const res = await fetch(`${API}/api/vault`, {
         method: "GET",
         credentials: "include",
-        headers: {
+        headers: withAuthHeaders({
             "Content-Type": "application/json",
-        },
+        }),
     });
 
     // If status is not 2xx (200-299), handle error gracefully
@@ -54,9 +67,9 @@ export async function deleteVaultItem(id) {
     const res = await fetch(`${API}/api/vault/${id}`, {
         method: "DELETE",
         credentials: "include",
-        headers: {
+        headers: withAuthHeaders({
             "Content-Type": "application/json",
-        },
+        }),
     });
 
     if (!res.ok) {
@@ -75,9 +88,9 @@ export async function updateVaultItem(id, encryptedPayload) {
     const res = await fetch(`${API}/api/vault/${id}`, {
         method: "PUT",
         credentials: "include",
-        headers: {
+        headers: withAuthHeaders({
             "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify(encryptedPayload),
     });
 

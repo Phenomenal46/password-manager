@@ -20,7 +20,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       {/* Global toast host for the whole app */}
-      <ToastContainer position="top-right" autoClose={2000} />
+      <ToastContainer position="top-right" autoClose={3000} />
       {vaultKey ? (
         <Vault vaultKey={vaultKey} onLogout={handleLogout} />
       ) : (

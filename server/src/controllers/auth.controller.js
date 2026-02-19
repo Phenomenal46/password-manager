@@ -102,7 +102,8 @@ export const login = async (req, res) => {
         );
 
         res.cookie("token", token, getCookieOptions());
-        res.json({ message: "Login successful" });
+        // Return token as fallback for environments blocking third-party cookies.
+        res.json({ message: "Login successful", token });
     } catch (err) {
         res.status(500).json({ message: "Login failed" });
     }

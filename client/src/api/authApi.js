@@ -1,4 +1,9 @@
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const TOKEN_KEY = "auth_token";
+
+export function getAuthToken() {
+    return localStorage.getItem(TOKEN_KEY);
+}
 
 /**
  * Login an existing user
@@ -32,6 +37,10 @@ export async function loginUser(email, password) {
     // res.ok is true only when status is 200-299
     if (!res.ok) {
         throw new Error(data.message || "Login failed");
+    }
+
+    if (data.token) {
+        localStorage.setItem(TOKEN_KEY, data.token);
     }
 
     return data;
@@ -77,6 +86,8 @@ export async function logoutUser() {
     if (!res.ok) {
         throw new Error(data.message || "Logout failed");
     }
+
+    localStorage.removeItem(TOKEN_KEY);
 
     return data;
 }
