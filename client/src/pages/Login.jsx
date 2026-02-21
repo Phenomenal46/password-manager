@@ -2,7 +2,7 @@ import { useState } from "react";
 import { deriveKey } from "../crypto/crypto";
 import { loginUser, signupUser } from "../api/authApi";
 
-function Login({ onKeyDerived }) {
+function Login({ onKeyDerived, onBack }) {
     const [email, setEmail] = useState("");
     const [masterPassword, setMasterPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -70,11 +70,20 @@ function Login({ onKeyDerived }) {
     }
 
     return (
-        <div className="w-full max-w-md bg-white rounded-xl shadow-md p-8">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+        <div className="w-full max-w-md rounded-2xl border border-slate-700/70 bg-slate-900/75 p-8 text-slate-100 shadow-2xl backdrop-blur">
+            {onBack && (
+                <button
+                    type="button"
+                    onClick={onBack}
+                    className="mb-4 text-base text-slate-300 hover:text-slate-100 hover:underline hover:cursor-pointer"
+                >
+                    ← Back to Home
+                </button>
+            )}
+            <h1 className="mb-2 text-3xl font-semibold text-slate-50">
                 {isSignup ? "Create Account" : "Unlock Vault"}
             </h1>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="mb-6 text-lg text-slate-300">
                 {isSignup
                     ? "Sign up with a master password to secure your vault"
                     : "Enter your master password to decrypt your vault"}
@@ -82,7 +91,7 @@ function Login({ onKeyDerived }) {
 
             {/* Show error message if login/signup failed */}
             {error && (
-                <div className="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded-md">
+                <div className="mb-4 rounded-md border border-red-500/40 bg-red-950/70 p-3 text-base text-red-200">
                     {error}
                 </div>
             )}
@@ -91,7 +100,7 @@ function Login({ onKeyDerived }) {
                 <input
                     type="email"
                     placeholder="Email"
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-md border border-slate-600 bg-slate-800 px-4 py-2 text-base text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -100,7 +109,7 @@ function Login({ onKeyDerived }) {
                 <input
                     type="password"
                     placeholder="Master Password"
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-md border border-slate-600 bg-slate-800 px-4 py-2 text-base text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={masterPassword}
                     onChange={(e) => setMasterPassword(e.target.value)}
                     required
@@ -109,7 +118,7 @@ function Login({ onKeyDerived }) {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-blue-600 text-white py-2 rounded-md font-medium hover:bg-blue-700 hover:cursor-pointer transition disabled:opacity-50"
+                    className="w-full rounded-md bg-blue-600 py-2 text-lg font-medium text-white transition hover:cursor-pointer hover:bg-blue-700 disabled:opacity-50"
                 >
                     {loading
                         ? "Please wait..."
@@ -120,7 +129,7 @@ function Login({ onKeyDerived }) {
             </form>
 
             {/* Toggle between Login ↔ Signup */}
-            <p className="text-sm text-center text-gray-500 mt-4">
+            <p className="mt-4 text-center text-base text-slate-300">
                 {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
                 <button
                     type="button"
@@ -128,7 +137,7 @@ function Login({ onKeyDerived }) {
                         setIsSignup(!isSignup);
                         setError(""); // clear errors when switching modes
                     }}
-                    className="text-blue-600 hover:underline hover:cursor-pointer"
+                    className="text-blue-400 hover:underline hover:cursor-pointer"
                 >
                     {isSignup ? "Login" : "Sign Up"}
                 </button>

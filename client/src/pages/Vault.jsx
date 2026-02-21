@@ -3,6 +3,17 @@ import { toast } from "react-toastify";
 import { fetchVault, addVaultItem, deleteVaultItem, updateVaultItem } from "../api/vaultApi";
 import { encryptData, decryptData } from "../crypto/crypto";
 
+function EyeIcon({ isOpen }) {
+    // Custom eye SVG icon for show/hide visibility toggle.
+    return (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" />
+            <circle cx="12" cy="12" r="3" />
+            {!isOpen && <path d="M3 3l18 18" />}
+        </svg>
+    );
+}
+
 
 
 function Vault({ vaultKey, onLogout }) {
@@ -214,177 +225,214 @@ function Vault({ vaultKey, onLogout }) {
     }
 
     return (
-        <div className="w-full max-w-5xl bg-white rounded-xl shadow-md p-8 relative">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-semibold text-gray-900">
-                    Your Vault
-                </h1>
-
-                <div className="flex gap-3">
-                    <button
-                        onClick={onLogout}
-                        className="text-sm text-gray-600 hover:underline hover:cursor-pointer"
-                    >
-                        Logout
-                    </button>
-
-                    <button
-                        disabled={loading}
-                        onClick={() => {
-                            setEditingItemId(null);
-                            setFormData({ site: "", username: "", password: "" });
-                            setShowModal(true);
-                        }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 hover:cursor-pointer"
-                    >
-                        + Add Item
-                    </button>
-                </div>
+        /* Dark gradient background for vault page with consistent branding */
+        <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 py-8 px-4">
+            {/* Consistent logo in top-left corner across all pages using one asset */}
+            <div className="fixed top-6 left-6 z-50 flex items-center gap-2 text-white text-xl font-semibold">
+                <img src="/cyber_neon.svg" alt="VaultX logo" className="h-7 w-7" />
+                <span>VaultX</span>
             </div>
-            {error && (
-                <div className="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded-md">
-                    {error}
-                </div>
-            )}
 
+            <div className="relative mt-16 mx-auto w-full max-w-5xl rounded-xl border border-slate-700/70 bg-slate-900/75 p-8 text-slate-100 shadow-2xl backdrop-blur">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-3xl font-semibold text-slate-50">
+                        Your Vault
+                    </h1>
 
-
-            {/* Vault List */}
-            {loading ? (
-                <p className="text-gray-500">Decrypting vault…</p>
-            ) : items.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                    Vault is empty
-                </div>
-            ) : (
-                <ul className="space-y-3">
-                    {items.map((item, i) => (
-                        <li
-                            key={i}
-                            className="border rounded-lg p-4 flex justify-between hover:bg-gray-50"
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onLogout}
+                            className="text-base text-slate-300 hover:underline hover:cursor-pointer"
                         >
-                            <div>
-                                <p className="font-medium">{item.site}</p>
-                                <p className="text-sm text-gray-500">
-                                    {item.username}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm text-gray-700">
-                                    {visibleIndex === i ? item.password : "••••••••"}
-                                </span>
+                            Logout
+                        </button>
 
-                                <button
-                                    onClick={() => handleToggleView(i)}
-                                    className="text-sm text-blue-600 hover:underline hover:cursor-pointer"
-                                >
-                                    {visibleIndex === i ? "Hide" : "View"}
-                                </button>
-
-                                <button
-                                    onClick={() => copyPassword(item.password)}
-                                    className="text-sm text-gray-500 hover:underline hover:cursor-pointer"
-                                >
-                                    Copy
-                                </button>
-
-                                <button
-                                    onClick={() => handleEditItem(item)}
-                                    className="text-sm text-green-600 hover:underline hover:cursor-pointer"
-                                >
-                                    Edit
-                                </button>
-
-                                <button
-                                    onClick={() => handleDeleteItem(item.id)}
-                                    className="text-sm text-red-600 hover:underline hover:cursor-pointer"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-
-
-                        </li>
-                    ))}
-                </ul>
-            )}
-
-            {/* MODAL - Add or Edit */}
-            {showModal && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-lg">
-                        <h2 className="text-lg font-semibold mb-4">
-                            {editingItemId ? "Edit Password" : "Add Password"}
-                        </h2>
-
-                        <form onSubmit={editingItemId ? handleSaveEdit : handleAddItem} className="space-y-4">
-                            <input
-                                name="site"
-                                placeholder="Website"
-                                required
-                                value={formData.site}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({ ...prev, site: e.target.value }))
-                                }
-                                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
-                            />
-                            <input
-                                name="username"
-                                placeholder="Username"
-                                required
-                                value={formData.username}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({ ...prev, username: e.target.value }))
-                                }
-                                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
-                            />
-                            <input
-                                name="password"
-                                type="password"
-                                placeholder="Password"
-                                required
-                                ref={passwordInputRef}
-                                value={formData.password}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({ ...prev, password: e.target.value }))
-                                }
-                                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
-                            />
-
-                            <div className="flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={handleGeneratePassword}
-                                    className="text-sm text-blue-600 hover:underline hover:cursor-pointer"
-                                >
-                                    Generate a strong password
-                                </button>
-                            </div>
-
-                            <div className="flex justify-end gap-3 pt-2">
-                                <button
-                                    type="button"
-                                    onClick={editingItemId ? handleCancelEdit : () => {
-                                        setShowModal(false);
-                                        setFormData({ site: "", username: "", password: "" });
-                                    }}
-                                    className="text-gray-600 hover:underline hover:cursor-pointer"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSaving}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 hover:cursor-pointer"
-                                >
-                                    {isSaving ? (editingItemId ? "Updating..." : "Saving...") : (editingItemId ? "Update" : "Save")}
-                                </button>
-                            </div>
-                        </form>
+                        <button
+                            disabled={loading}
+                            onClick={() => {
+                                setEditingItemId(null);
+                                setFormData({ site: "", username: "", password: "" });
+                                setShowModal(true);
+                            }}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 hover:cursor-pointer"
+                        >
+                            + Add Item
+                        </button>
                     </div>
                 </div>
-            )}
+                {error && (
+                    <div className="mb-4 rounded-md border border-red-500/40 bg-red-950/70 p-3 text-base text-red-200">
+                        {error}
+                    </div>
+                )}
+
+
+
+                {/* Vault List */}
+                {loading ? (
+                    <p className="text-lg text-slate-300">Decrypting vault…</p>
+                ) : items.length === 0 ? (
+                    <div className="py-12 text-center text-lg text-slate-300">
+                        Vault is empty
+                    </div>
+                ) : (
+                    <ul className="space-y-3">
+                        {items.map((item, i) => (
+                            <li
+                                key={i}
+                                className="flex justify-between rounded-lg border border-slate-700 bg-slate-800/60 p-4 hover:bg-slate-800"
+                            >
+                                <div>
+                                    <p className="text-lg font-medium">{item.site}</p>
+                                    <p className="text-base text-slate-300">
+                                        {item.username}
+                                    </p>
+                                </div>
+                                {/* Icon-based action buttons for modern UX */}
+                                <div className="flex items-center gap-3">
+                                    <span className="font-mono text-base text-slate-200">
+                                        {visibleIndex === i ? item.password : "••••••••"}
+                                    </span>
+
+                                    {/* View/Hide icon button */}
+                                    <button
+                                        onClick={() => handleToggleView(i)}
+                                        className="rounded-lg p-2 text-blue-300 transition hover:cursor-pointer hover:bg-blue-500/20"
+                                        title={visibleIndex === i ? "Hide" : "View"}
+                                    >
+                                        <EyeIcon isOpen={visibleIndex === i} />
+                                    </button>
+
+                                    {/* Copy icon button */}
+                                    <button
+                                        onClick={() => copyPassword(item.password)}
+                                        className="rounded-lg p-2 text-slate-300 transition hover:cursor-pointer hover:bg-slate-700"
+                                        title="Copy password"
+                                    >
+                                        <lord-icon
+                                            src="https://cdn.lordicon.com/iykgtsbt.json"
+                                            trigger="hover"
+                                            // High-contrast colors for visibility on dark cards.
+                                            colors="primary:#f8fafc,secondary:#38bdf8"
+                                            style={{ width: "22px", height: "22px" }}
+                                        ></lord-icon>
+                                    </button>
+
+                                    {/* Edit icon button */}
+                                    <button
+                                        onClick={() => handleEditItem(item)}
+                                        className="rounded-lg p-2 text-green-300 transition hover:cursor-pointer hover:bg-green-500/20"
+                                        title="Edit"
+                                    >
+                                        <lord-icon
+                                            src="https://cdn.lordicon.com/gwlusjdu.json"
+                                            trigger="hover"
+                                            // High-contrast colors for visibility on dark cards.
+                                            colors="primary:#f8fafc,secondary:#34d399"
+                                            style={{ width: "22px", height: "22px" }}
+                                        ></lord-icon>
+                                    </button>
+
+                                    {/* Delete icon button */}
+                                    <button
+                                        onClick={() => handleDeleteItem(item.id)}
+                                        className="rounded-lg p-2 text-red-300 transition hover:cursor-pointer hover:bg-red-500/20"
+                                        title="Delete"
+                                    >
+                                        {/* Lordicon add action for modern interaction */}
+                                        <lord-icon
+                                            src="https://cdn.lordicon.com/skkahier.json"
+                                            trigger="hover"
+                                            // High-contrast colors for visibility on dark cards.
+                                            colors="primary:#f8fafc,secondary:#f87171"
+                                            style={{ width: "20px", height: "20px" }}
+                                        ></lord-icon>
+                                    </button>
+                                </div>
+
+
+                            </li>
+                        ))}
+                    </ul>
+                )}
+
+                {/* MODAL - Add or Edit */}
+                {showModal && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-lg">
+                            <h2 className="mb-4 text-2xl font-semibold">
+                                {editingItemId ? "Edit Password" : "Add Password"}
+                            </h2>
+
+                            <form onSubmit={editingItemId ? handleSaveEdit : handleAddItem} className="space-y-4">
+                                <input
+                                    name="site"
+                                    placeholder="Website"
+                                    required
+                                    value={formData.site}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({ ...prev, site: e.target.value }))
+                                    }
+                                    className="w-full rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-base text-slate-100 focus:ring-2 focus:ring-blue-500"
+                                />
+                                <input
+                                    name="username"
+                                    placeholder="Username"
+                                    required
+                                    value={formData.username}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({ ...prev, username: e.target.value }))
+                                    }
+                                    className="w-full rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-base text-slate-100 focus:ring-2 focus:ring-blue-500"
+                                />
+                                <input
+                                    name="password"
+                                    type="password"
+                                    placeholder="Password"
+                                    required
+                                    ref={passwordInputRef}
+                                    value={formData.password}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({ ...prev, password: e.target.value }))
+                                    }
+                                    className="w-full rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-base text-slate-100 focus:ring-2 focus:ring-blue-500"
+                                />
+
+                                <div className="flex justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={handleGeneratePassword}
+                                        className="text-base text-blue-400 hover:underline hover:cursor-pointer"
+                                    >
+                                        Generate a strong password
+                                    </button>
+                                </div>
+
+                                <div className="flex justify-end gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={editingItemId ? handleCancelEdit : () => {
+                                            setShowModal(false);
+                                            setFormData({ site: "", username: "", password: "" });
+                                        }}
+                                        className="text-base text-slate-300 hover:underline hover:cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSaving}
+                                        className="rounded-md bg-blue-600 px-4 py-2 text-base text-white hover:cursor-pointer hover:bg-blue-700"
+                                    >
+                                        {isSaving ? (editingItemId ? "Updating..." : "Saving...") : (editingItemId ? "Update" : "Save")}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
