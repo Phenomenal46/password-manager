@@ -46,10 +46,10 @@ function Landing({ onLoginClick }) {
                 <p className="text-base font-semibold tracking-wide text-blue-200/90">
                     ZERO-TRUST ARCHITECTURE • SERVER-BLIND ENCRYPTION
                 </p>
-                <h1 className="mx-auto mt-4 max-w-4xl text-5xl font-bold leading-tight md:text-6xl">
+                <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-bold leading-tight sm:text-6xl">
                     Manage your passwords securely with client-side encryption.
                 </h1>
-                <p className="mx-auto mt-6 max-w-3xl text-xl leading-relaxed text-slate-200/90">
+                <p className="mx-auto mt-6 max-w-3xl text-base md:text-xl leading-relaxed text-slate-200/90">
                     VaultX encrypts your credentials in the browser before storage. Your passwords stay private,
                     and only you can decrypt them with your master password.
                 </p>
@@ -70,19 +70,18 @@ function Landing({ onLoginClick }) {
                     </button>
                 </div>
 
-                {/* Features section with increased text size for better readability */}
                 <section id="features" className="mt-24 grid gap-6 md:grid-cols-3 text-left">
                     <article className="rounded-xl border border-white/15 bg-white/5 p-6">
                         <h2 className="text-2xl font-semibold">Client-side encryption</h2>
-                        <p className="mt-2 text-lg text-slate-200/85">Passwords are encrypted in your browser before they are saved.</p>
+                        <p className="mt-2 text-base text-slate-200/85">Passwords are encrypted in your browser before they are saved.</p>
                     </article>
                     <article id="security" className="rounded-xl border border-white/15 bg-white/5 p-6">
                         <h2 className="text-2xl font-semibold">Secure authentication</h2>
-                        <p className="mt-2 text-lg text-slate-200/85">JWT tokens with httpOnly cookies protect your session across requests.</p>
+                        <p className="mt-2 text-base text-slate-200/85">JWT tokens with httpOnly cookies protect your session across requests.</p>
                     </article>
                     <article id="how-it-works" className="rounded-xl border border-white/15 bg-white/5 p-6">
                         <h2 className="text-2xl font-semibold">Simple vault experience</h2>
-                        <p className="mt-2 text-lg text-slate-200/85">Add, edit, copy, and manage credentials with a minimal clean UI.</p>
+                        <p className="mt-2 text-base text-slate-200/85">Add, edit, copy, and manage credentials with a minimal clean UI.</p>
                     </article>
                 </section>
             </main>

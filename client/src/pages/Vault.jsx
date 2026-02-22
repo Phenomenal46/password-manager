@@ -227,23 +227,22 @@ function Vault({ vaultKey, onLogout }) {
     return (
         /* Dark gradient background for vault page with consistent branding */
         <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 py-8 px-4">
-            {/* Consistent logo in top-left corner across all pages using one asset */}
             <div className="fixed top-6 left-6 z-50 flex items-center gap-2 text-white text-xl font-semibold">
                 <img src="/cyber_neon.svg" alt="VaultX logo" className="h-7 w-7" />
                 <span>VaultX</span>
             </div>
 
-            <div className="relative mt-16 mx-auto w-full max-w-5xl rounded-xl border border-slate-700/70 bg-slate-900/75 p-8 text-slate-100 shadow-2xl backdrop-blur">
+            <div className="relative mt-16 mx-auto w-full max-w-5xl rounded-xl border border-slate-700/70 bg-slate-900/75 p-4 sm:p-8 text-slate-100 shadow-2xl backdrop-blur">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-3xl font-semibold text-slate-50">
+                <div className="vault-header mb-6">
+                    <h1 className="text-xl sm:text-3xl font-semibold text-slate-50">
                         Your Vault
                     </h1>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 sm:gap-3">
                         <button
                             onClick={onLogout}
-                            className="text-base text-slate-300 hover:underline hover:cursor-pointer"
+                            className="text-xs sm:text-base text-slate-300 hover:underline hover:cursor-pointer"
                         >
                             Logout
                         </button>
@@ -255,7 +254,7 @@ function Vault({ vaultKey, onLogout }) {
                                 setFormData({ site: "", username: "", password: "" });
                                 setShowModal(true);
                             }}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 hover:cursor-pointer"
+                            className="bg-blue-600 text-white px-2 sm:px-4 py-2 text-sm sm:text-base rounded-md hover:bg-blue-700 disabled:opacity-50 hover:cursor-pointer whitespace-nowrap"
                         >
                             + Add Item
                         </button>
@@ -277,28 +276,28 @@ function Vault({ vaultKey, onLogout }) {
                         Vault is empty
                     </div>
                 ) : (
-                    <ul className="space-y-3">
+                    <ul className="space-y-3 max-h-[calc(100vh-320px)] overflow-y-auto pr-2 vault-scroll">
                         {items.map((item, i) => (
                             <li
                                 key={i}
-                                className="flex justify-between rounded-lg border border-slate-700 bg-slate-800/60 p-4 hover:bg-slate-800"
+                                className="flex flex-col sm:flex-row sm:justify-between rounded-lg border border-slate-700 bg-slate-800/60 p-3 sm:p-4 hover:bg-slate-800 gap-3 sm:gap-0 sm:items-center"
                             >
-                                <div>
-                                    <p className="text-lg font-medium">{item.site}</p>
-                                    <p className="text-base text-slate-300">
+                                <div className="min-w-0">
+                                    <p className="text-base sm:text-lg font-medium truncate">{item.site}</p>
+                                    <p className="text-sm sm:text-base text-slate-300 truncate">
                                         {item.username}
                                     </p>
                                 </div>
                                 {/* Icon-based action buttons for modern UX */}
-                                <div className="flex items-center gap-3">
-                                    <span className="font-mono text-base text-slate-200">
+                                <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+                                    <span className="font-mono text-xs sm:text-base text-slate-200 order-first sm:order-0">
                                         {visibleIndex === i ? item.password : "••••••••"}
                                     </span>
 
                                     {/* View/Hide icon button */}
                                     <button
                                         onClick={() => handleToggleView(i)}
-                                        className="rounded-lg p-2 text-blue-300 transition hover:cursor-pointer hover:bg-blue-500/20"
+                                        className="rounded-lg p-1.5 sm:p-2 text-blue-300 transition hover:cursor-pointer hover:bg-blue-500/20"
                                         title={visibleIndex === i ? "Hide" : "View"}
                                     >
                                         <EyeIcon isOpen={visibleIndex === i} />
@@ -307,46 +306,46 @@ function Vault({ vaultKey, onLogout }) {
                                     {/* Copy icon button */}
                                     <button
                                         onClick={() => copyPassword(item.password)}
-                                        className="rounded-lg p-2 text-slate-300 transition hover:cursor-pointer hover:bg-slate-700"
+                                        className="rounded-lg p-1.5 sm:p-2 text-slate-300 transition hover:cursor-pointer hover:bg-slate-700"
                                         title="Copy password"
                                     >
                                         <lord-icon
                                             src="https://cdn.lordicon.com/iykgtsbt.json"
                                             trigger="hover"
-                                            // High-contrast colors for visibility on dark cards.
-                                            colors="primary:#f8fafc,secondary:#38bdf8"
-                                            style={{ width: "22px", height: "22px" }}
+                                            // Bright cyan for better hover contrast.
+                                            colors="primary:#ffffff,secondary:#00d9ff"
+                                            className="icon-copy-sm"
                                         ></lord-icon>
                                     </button>
 
                                     {/* Edit icon button */}
                                     <button
                                         onClick={() => handleEditItem(item)}
-                                        className="rounded-lg p-2 text-green-300 transition hover:cursor-pointer hover:bg-green-500/20"
+                                        className="rounded-lg p-1.5 sm:p-2 text-green-300 transition hover:cursor-pointer hover:bg-green-500/20"
                                         title="Edit"
                                     >
                                         <lord-icon
                                             src="https://cdn.lordicon.com/gwlusjdu.json"
                                             trigger="hover"
-                                            // High-contrast colors for visibility on dark cards.
-                                            colors="primary:#f8fafc,secondary:#34d399"
-                                            style={{ width: "22px", height: "22px" }}
+                                            // Bright green for better hover contrast.
+                                            colors="primary:#ffffff,secondary:#1eff5e"
+                                            className="icon-edit-sm"
                                         ></lord-icon>
                                     </button>
 
                                     {/* Delete icon button */}
                                     <button
                                         onClick={() => handleDeleteItem(item.id)}
-                                        className="rounded-lg p-2 text-red-300 transition hover:cursor-pointer hover:bg-red-500/20"
+                                        className="rounded-lg p-1.5 sm:p-2 text-red-300 transition hover:cursor-pointer hover:bg-red-500/20"
                                         title="Delete"
                                     >
                                         {/* Lordicon add action for modern interaction */}
                                         <lord-icon
                                             src="https://cdn.lordicon.com/skkahier.json"
                                             trigger="hover"
-                                            // High-contrast colors for visibility on dark cards.
-                                            colors="primary:#f8fafc,secondary:#f87171"
-                                            style={{ width: "20px", height: "20px" }}
+                                            // Bright red for better hover contrast.
+                                            colors="primary:#ffffff,secondary:#ff2863"
+                                            className="icon-delete-sm"
                                         ></lord-icon>
                                     </button>
                                 </div>
