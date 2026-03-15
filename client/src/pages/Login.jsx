@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { deriveKey } from "../crypto/crypto";
 import { loginUser, signupUser } from "../api/authApi";
+import { normalizeEmail } from "../utils/email";
 
 function Login({ onKeyDerived, onBack }) {
     const [email, setEmail] = useState("");
@@ -18,36 +19,34 @@ function Login({ onKeyDerived, onBack }) {
         setLoading(true);
         setError(""); // clear any previous errors
 
+        const normalizedEmail = normalizeEmail(email);
+
         try {
             if (isSignup) {
                 // ──── SIGNUP FLOW ────
                 // Step 1: Create user account on server
                 //   Server hashes password with bcrypt and stores it
-                await signupUser(email, masterPassword);
+                await signupUser(normalizedEmail, masterPassword);
 
                 // Step 2: After signup, auto-login to get the JWT token
                 //   (Server doesn't return token on signup, so we login immediately)
-                await loginUser(email, masterPassword);
+                await loginUser(normalizedEmail, masterPassword);
             } else {
                 // ──── LOGIN FLOW ────
                 // Step 1: Send credentials to server for verification
                 //   Server checks email exists + password matches bcrypt hash
                 //   If valid → returns JWT token (stored in localStorage by loginUser)
-                await loginUser(email, masterPassword);
+                await loginUser(normalizedEmail, masterPassword);
             }
 
             // Step 2: Derive the encryption key from master password
             //
             // "salt" is used to make the encryption key unique per user.
-            // We use the email as salt because:
+            // We use the normalized email as salt because:
             //   - It's unique per user (no two users have same email)
-            //   - It's deterministic (same email always produces same key)
+            //   - It's deterministic across casing/whitespace differences
             //   - It doesn't need to be secret (salt ≠ password)
-            //
-            // Previously named "saltFromServer" which was misleading —
-            // the salt is NOT fetched from the server, it's just the email
-            // the user typed in the form.
-            const salt = email;
+            const salt = normalizedEmail;
             const key = await deriveKey(masterPassword, salt);
 
             // Step 3: Pass the encryption key up to App.jsx

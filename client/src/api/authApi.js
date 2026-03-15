@@ -1,3 +1,5 @@
+import { normalizeEmail } from "../utils/email";
+
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const TOKEN_KEY = "auth_token";
 
@@ -18,6 +20,8 @@ export function getAuthToken() {
  * - The JWT token proves "I am this user" for every future request
  */
 export async function loginUser(email, password) {
+    const normalizedEmail = normalizeEmail(email);
+
     // Send credentials to server's login endpoint
     const res = await fetch(`${API}/api/auth/login`, {
         method: "POST",
@@ -27,7 +31,7 @@ export async function loginUser(email, password) {
             "Content-Type": "application/json",
         },
         // Convert JS object to JSON string (fetch requires string, not object)
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password }),
     });
 
     // Parse the JSON response from server
@@ -55,13 +59,15 @@ export async function loginUser(email, password) {
  * 3. Returns success message (no token yet — user must login after signup)
  */
 export async function signupUser(email, password) {
+    const normalizedEmail = normalizeEmail(email);
+
     const res = await fetch(`${API}/api/auth/signup`, {
         method: "POST",
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password }),
     });
 
     const data = await res.json();
