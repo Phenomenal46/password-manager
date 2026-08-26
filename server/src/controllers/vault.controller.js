@@ -8,15 +8,33 @@ import VaultItem from "../models/VaultItem.js";
  */
 export const getVaultItems = async (req, res) => {
     try {
-        // req.userId comes from authMiddleware (extracted from JWT token)
-        // Return only what the client needs (encrypted payload + id for delete).
-        const items = await VaultItem.find(
-            { userId: req.userId },
-            "encryptedData iv"
-        );
+        const limit = Math.min(Number(req.query.limit) || 50, 100);
+        const cursor = req.query.cursor;
 
-        // Return the encrypted items (with their IVs needed for decryption)
-        res.json(items);
+        const filter = { userId: req.userId };
+
+        if (cursor) {
+            filter._id = { $lt: cursor };
+        }
+
+        const items = await VaultItem.find(
+            filter,
+            "encryptedData iv"
+        )
+            .sort({ _id: -1 })
+            .limit(limit + 1)
+            .lean();
+
+        const hasMore = items.length > limit;
+        const page = hasMore ? items.slice(0, limit) : items;
+
+        res.json({
+            items: page,
+            nextCursor: hasMore
+                ? page[page.length - 1]._id
+                : null
+        });
+
     } catch (err) {
         // Generic error to avoid leaking internal details
         res.status(500).json({ message: "Failed to fetch vault items" });

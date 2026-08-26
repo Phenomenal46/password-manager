@@ -38,13 +38,21 @@ export async function addVaultItem(encryptedPayload) {
 }
 
 /**
- * Fetch all encrypted vault items for the logged-in user
- * Server returns array of {encryptedData, iv} objects
- * Client then decrypts each one using the master password
+ * Fetch a page of encrypted vault items for the logged-in user
+ * Server returns { items: [{encryptedData, iv}, ...], nextCursor }
+ * - cursor: the _id of the last item from the previous page (omit/undefined for the first page)
+ * - limit: how many items to fetch in this page (optional, server defaults if not passed)
+ * Client then decrypts each item using the master password
  */
-export async function fetchVault() {
+export async function fetchVault(cursor, limit) {
+    // Build query string only with params that are actually provided
+    const params = new URLSearchParams();
+    if (cursor) params.set("cursor", cursor);
+    if (limit) params.set("limit", limit);
+    const queryString = params.toString();
+
     // GET from /api/vault (URL must match server route)
-    const res = await fetch(`${API}/api/vault`, {
+    const res = await fetch(`${API}/api/vault${queryString ? `?${queryString}` : ""}`, {
         method: "GET",
         credentials: "include",
         headers: withAuthHeaders({
@@ -57,6 +65,8 @@ export async function fetchVault() {
         const errorData = await res.json();
         throw new Error(errorData.message || "Failed to fetch vault");
     }
+
+    // Returns { items, nextCursor } — caller uses nextCursor for the next page
     return res.json();
 }
 

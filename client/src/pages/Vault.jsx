@@ -24,6 +24,13 @@ function Vault({ vaultKey, onLogout }) {
     const [error, setError] = useState("");
 
     const [loading, setLoading] = useState(true);
+    // Pagination state:
+    // cursor = the _id of the last item we've loaded so far (null = none loaded yet)
+    // hasMore = does the server have more items beyond what we've fetched?
+    // loadingMore = true only while a "Load More" fetch is in flight (separate from initial `loading`)
+    const [cursor, setCursor] = useState(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -33,23 +40,34 @@ function Vault({ vaultKey, onLogout }) {
 
     const passwordInputRef = useRef(null);
 
+    // Decrypts one batch/page of encrypted items.
+    // Runs Promise.all() ONLY over this one batch (e.g. 50 items) —
+    // never over the whole vault — so each page's decryption is fast
+    // and independent, instead of redoing/growing one giant Promise.all
+    // every time we load more.
+    async function decryptBatch(encryptedItems) {
+        return Promise.all(
+            encryptedItems.map(async (item) => {
+                const decrypted = await decryptData(
+                    item.encryptedData,
+                    item.iv,
+                    vaultKey
+                );
+                return { id: item._id, ...decrypted };
+            })
+        );
+    }
+    // Initial load: fetch the first page (no cursor) when vaultKey is ready
     useEffect(() => {
         async function loadVault() {
             try {
-                const encryptedItems = await fetchVault();
+                const { items: encryptedItems, nextCursor } = await fetchVault();
 
-                const decryptedItems = await Promise.all(
-                    encryptedItems.map(async (item) => {
-                        const decrypted = await decryptData(
-                            item.encryptedData,
-                            item.iv,
-                            vaultKey
-                        );
-                        return { id: item._id, ...decrypted };
-                    })
-                );
+                const decryptedItems = await decryptBatch(encryptedItems);
 
                 setItems(decryptedItems);
+                setCursor(nextCursor);
+                setHasMore(nextCursor !== null);
                 setError("");
             } catch (err) {
                 setError("Unable to decrypt vault. Wrong password or server error.");
@@ -62,6 +80,26 @@ function Vault({ vaultKey, onLogout }) {
         loadVault();
     }, [vaultKey]);
 
+
+    // "Load More": fetch the next page using the current cursor, decrypt
+    // just that page, and APPEND it to existing items (don't refetch/redecrypt everything)
+    async function loadMore() {
+        if (!hasMore || loadingMore) return; // guard against double-clicks / no more pages
+
+        setLoadingMore(true);
+        try {
+            const { items: encryptedItems, nextCursor } = await fetchVault(cursor);
+            const decryptedItems = await decryptBatch(encryptedItems);
+            setItems((prevItems) => [...prevItems, ...decryptedItems]);
+            setCursor(nextCursor);
+            setHasMore(nextCursor !== null);
+        } catch (err) {
+            setError("Unable to load more items. Please try again.");
+            console.error(err);
+        } finally {
+            setLoadingMore(false);
+        }
+    }
 
     useEffect(() => {
         if (visibleIndex !== null) {
@@ -354,6 +392,10 @@ function Vault({ vaultKey, onLogout }) {
                             </li>
                         ))}
                     </ul>
+
+
+
+
                 )}
 
                 {/* MODAL - Add or Edit */}
@@ -431,6 +473,19 @@ function Vault({ vaultKey, onLogout }) {
                         </div>
                     </div>
                 )}
+
+
+                {/* Load More button — only shows if there are more items to fetch */}
+                {hasMore && (
+                    <button
+                        onClick={loadMore}
+                        disabled={loadingMore}
+                    >
+                        {loadingMore ? "Loading..." : "Load More"}
+                    </button>
+                )}
+
+                
             </div>
         </div>
     );
