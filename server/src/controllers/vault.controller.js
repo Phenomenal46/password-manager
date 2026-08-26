@@ -13,6 +13,10 @@ export const getVaultItems = async (req, res) => {
 
         const filter = { userId: req.userId };
 
+        if (cursor && !mongoose.isValidObjectId(cursor)) {
+            return res.status(400).json({ message: "Invalid cursor" });
+        }
+        
         if (cursor) {
             filter._id = { $lt: cursor };
         }
