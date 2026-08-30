@@ -1,9 +1,12 @@
 import VaultItem from "../models/VaultItem.js";
+import mongoose from "mongoose";
 
 /**
- * GET all encrypted vault items for the logged-in user
- * - Queries database for all items belonging to this user
- * - Returns array of {encryptedData, iv} (no decryption on server!)
+ * GET a page of encrypted vault items for the logged-in user
+ * - Supports cursor-based pagination via ?cursor and ?limit query params
+ * - Queries the database for items belonging to this user, newest first
+ * - Returns { items, nextCursor } — nextCursor is null when there are no more pages
+ * - Returns only {encryptedData, iv} per item (no decryption happens on the server!)
  * - Client decrypts using the master password derived from login
  */
 export const getVaultItems = async (req, res) => {
