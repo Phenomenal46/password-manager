@@ -2,6 +2,8 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 
 import { signup, login, logout } from "../controllers/auth.controller.js";
+import {signupSchema,loginSchema,} from "../schemas/auth.schema.js";
+import { validate } from "../middleware/validate.middleware.js";
 
 const router = express.Router();
 
@@ -22,8 +24,8 @@ const testAwareAuthLimiter = (req, res, next) => {
     return authLimiter(req, res, next);
 };
 
-router.post("/signup", testAwareAuthLimiter, signup);
-router.post("/login", testAwareAuthLimiter, login);
+router.post("/signup", testAwareAuthLimiter,validate(signupSchema), signup);
+router.post("/login", testAwareAuthLimiter,validate(loginSchema), login);
 router.post("/logout", logout);
 
 export default router;

@@ -2,18 +2,8 @@ import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
-const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
-const MIN_PASSWORD_LENGTH = 8;
 const TOKEN_EXPIRES_IN = "1h";
 const COOKIE_MAX_AGE_MS = 60 * 60 * 1000;
-
-function isValidEmail(email) {
-    return EMAIL_REGEX.test(email);
-}
-
-function isValidPassword(password) {
-    return password.length >= MIN_PASSWORD_LENGTH;
-}
 
 function getCookieOptions() {
     const isProduction = process.env.NODE_ENV === "production";
@@ -25,26 +15,12 @@ function getCookieOptions() {
     };
 }
 
-export const signup = async (req, res) => {
+export const signup = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        // Basic validation so bad data never reaches the database.
-        if (!email || !password) {
-            return res.status(400).json({ message: "Email and password required" });
-        }
-        if (!isValidEmail(email)) {
-            return res.status(400).json({ message: "Invalid email format" });
-        }
-        if (!isValidPassword(password)) {
-            return res.status(400).json({ message: "Password must be at least 8 characters" });
-        }
-
-        // Normalize email to avoid case/space duplicates.
-        const normalizedEmail = email.trim().toLowerCase();
-
         // Check if user already exists
-        const existingUser = await User.findOne({ email: normalizedEmail });
+        const existingUser = await User.findOne({ email: email });
         if (existingUser) {
             return res.status(409).json({ message: "User already exists" });
         }
@@ -54,36 +30,22 @@ export const signup = async (req, res) => {
 
         // Save user
         await User.create({
-            email: normalizedEmail,
+            email: email,
             passwordHash,
         });
 
         res.status(201).json({ message: "User created successfully" });
-    } catch (err) {
-        res.status(500).json({ message: "Signup failed" });
+    } catch (error) {
+        next(error); // Pass error to centralized error handler
     }
 };
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        // Check input
-        if (!email || !password) {
-            return res.status(400).json({ message: "Email and password required" });
-        }
-        if (!isValidEmail(email)) {
-            return res.status(400).json({ message: "Invalid email format" });
-        }
-        if (!isValidPassword(password)) {
-            return res.status(400).json({ message: "Invalid password" });
-        }
-
-        // Normalize email so login matches signup consistently.
-        const normalizedEmail = email.trim().toLowerCase();
-
         // Find user
-        const user = await User.findOne({ email: normalizedEmail });
+        const user = await User.findOne({ email: email });
         if (!user) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
@@ -104,8 +66,8 @@ export const login = async (req, res) => {
         res.cookie("token", token, getCookieOptions());
         // Return token as fallback for environments blocking third-party cookies.
         res.json({ message: "Login successful", token });
-    } catch (err) {
-        res.status(500).json({ message: "Login failed" });
+    } catch (error) {
+        next(error); // Pass error to centralized error handler
     }
 };
 

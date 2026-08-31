@@ -1,5 +1,4 @@
 import VaultItem from "../models/VaultItem.js";
-import mongoose from "mongoose";
 
 /**
  * GET a page of encrypted vault items for the logged-in user
@@ -11,15 +10,11 @@ import mongoose from "mongoose";
  */
 export const getVaultItems = async (req, res) => {
     try {
-        const limit = Math.min(Number(req.query.limit) || 50, 100);
+        const limit = req.query.limit;
         const cursor = req.query.cursor;
 
         const filter = { userId: req.userId };
 
-        if (cursor && !mongoose.isValidObjectId(cursor)) {
-            return res.status(400).json({ message: "Invalid cursor" });
-        }
-        
         if (cursor) {
             filter._id = { $lt: cursor };
         }
@@ -42,9 +37,8 @@ export const getVaultItems = async (req, res) => {
                 : null
         });
 
-    } catch (err) {
-        // Generic error to avoid leaking internal details
-        res.status(500).json({ message: "Failed to fetch vault items" });
+    } catch (error) {
+        next(error); // Pass error to centralized error handler
     }
 };
 
@@ -59,11 +53,6 @@ export const addVaultItem = async (req, res) => {
         // Expect client-side encrypted payload and IV only; server never sees plaintext.
         const { encryptedData, iv } = req.body;
 
-        // Basic validation to avoid storing empty secrets.
-        if (!encryptedData || !iv) {
-            return res.status(400).json({ message: "Encrypted data required" });
-        }
-
         // Store the encrypted blob tied to the authenticated user.
         const vaultItem = await VaultItem.create({
             userId: req.userId,
@@ -73,9 +62,8 @@ export const addVaultItem = async (req, res) => {
 
         // Return the new id so the client can update its list.
         res.status(201).json({ id: vaultItem._id });
-    } catch (err) {
-        // Generic error avoids leaking internal details.
-        res.status(500).json({ message: "Failed to add vault item" });
+    } catch (error) {
+        next(error); // Pass error to centralized error handler
     }
 };
 
@@ -97,8 +85,8 @@ export const deleteVaultItem = async (req, res) => {
         }
 
         res.json({ message: "Vault item deleted" });
-    } catch (err) {
-        res.status(500).json({ message: "Failed to delete vault item" });
+    } catch (error) {
+        next(error); // Pass error to centralized error handler
     }
 };
 
@@ -112,11 +100,6 @@ export const updateVaultItem = async (req, res) => {
         const { id } = req.params;
         const { encryptedData, iv } = req.body;
 
-        // Basic validation
-        if (!encryptedData || !iv) {
-            return res.status(400).json({ message: "Encrypted data required" });
-        }
-
         // Update only if user owns this item
         const updated = await VaultItem.findOneAndUpdate(
             { _id: id, userId: req.userId },
@@ -129,7 +112,7 @@ export const updateVaultItem = async (req, res) => {
         }
 
         res.json({ message: "Vault item updated" });
-    } catch (err) {
-        res.status(500).json({ message: "Failed to update vault item" });
+    } catch (error) {
+        next(error); // Pass error to centralized error handler
     }
 };

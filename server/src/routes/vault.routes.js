@@ -1,17 +1,19 @@
 import express from "express";
 import { addVaultItem, getVaultItems, deleteVaultItem, updateVaultItem } from "../controllers/vault.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
+import {vaultItemSchema,vaultQuerySchema,} from "../schemas/vault.schema.js";
+import { validate } from "../middleware/validate.middleware.js";
 
 const router = express.Router();
 
 // GET /api/vault - Fetch all encrypted vault items for logged-in user
-router.get("/", authMiddleware, getVaultItems);
+router.get("/", authMiddleware, validate(vaultQuerySchema, "query"), getVaultItems);
 
 // POST /api/vault - Add a new encrypted item to vault
-router.post("/", authMiddleware, addVaultItem);
+router.post("/", authMiddleware, validate(vaultItemSchema), addVaultItem);
 
 // PUT /api/vault/:id - Update a vault item by id
-router.put("/:id", authMiddleware, updateVaultItem);
+router.put("/:id", authMiddleware, validate(vaultItemSchema), updateVaultItem);
 
 // DELETE /api/vault/:id - Delete a vault item by id
 router.delete("/:id", authMiddleware, deleteVaultItem);

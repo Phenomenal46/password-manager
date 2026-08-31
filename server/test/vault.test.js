@@ -583,3 +583,44 @@ test("GET /api/vault returns only the authenticated user's vault items", async (
         "user-a-iv"
     );
 });
+
+test("GET /api/vault rejects an invalid limit", async () => {
+    const response = await request(app)
+        .get("/api/vault")
+        .query({ limit: "invalid" })
+        .set("Cookie", authCookie);
+
+    assert.equal(response.statusCode, 400);
+});
+
+test("GET /api/vault rejects an invalid cursor", async () => {
+    const response = await request(app)
+        .get("/api/vault")
+        .query({ cursor: "not-a-valid-object-id" })
+        .set("Cookie", authCookie);
+
+    assert.equal(response.statusCode, 400);
+});
+
+test("POST /api/vault rejects oversized encrypted payloads", async () => {
+    const response = await request(app)
+        .post("/api/vault")
+        .set("Cookie", authCookie)
+        .send({
+            encryptedData: "x".repeat(100_001),
+            iv: "some-iv",
+        });
+
+    assert.equal(response.statusCode, 400);
+});
+
+test("POST /api/vault rejects missing fields", async () => {
+    const response = await request(app)
+        .post("/api/vault")
+        .set("Cookie", authCookie)
+        .send({
+            encryptedData: "encrypted-data",
+        });
+
+    assert.equal(response.statusCode, 400);
+});
