@@ -7,13 +7,17 @@
 ## ✨ Key Features
 
 | Feature | Details |
-|---------|---------|
-| 🔒 **Client-Side Encryption** | AES-256-GCM encryption in the browser for maximum security |
-| 🎫 **JWT Authentication** | Secure HTTP-only cookies for stateless authentication |
+| --- | --- |
+| 🔒 **Client-Side Encryption** | AES-256-GCM encryption in the browser; the backend stores encrypted vault payloads rather than plaintext credentials |
+| 🎫 **JWT Authentication** | JWT-based authentication stored in HTTP-only cookies with credentialed CORS support |
+| 🛡️ **Request Validation** | Zod schemas validate authentication payloads, vault payloads, and pagination query parameters at the API boundary |
 | 🔑 **Password Management** | Add, edit, delete, copy, and generate strong passwords |
-| ⚡ **Fast UI Feedback** | Toast notifications for all user actions |
+| 📄 **Cursor-Based Pagination** | Vault retrieval uses cursor-based pagination with bounded page sizes and a `nextCursor` response |
+| 🚦 **Authentication Rate Limiting** | Signup/login endpoints are rate-limited to reduce repeated authentication attempts |
+| ⚡ **Centralized Error Handling** | Unexpected application errors are routed through a shared Express error-handling middleware |
+| 🧪 **API Test Coverage** | Authentication, vault CRUD, pagination, and validation paths are exercised with automated API tests |
 | 📱 **Responsive Design** | Works seamlessly on desktop and mobile devices |
-| 🔐 **Zero-Knowledge Architecture** | Server stores only encrypted data; decryption happens client-side |
+| 🔐 **Zero-Knowledge Architecture** | Encryption/decryption responsibilities remain on the client while the server manages authenticated storage and access control |
 
 ---
 
@@ -26,12 +30,12 @@ React 18 + Vite ⚡ | Tailwind CSS 🎨 | Fetch API 🌐
 
 ### Backend
 ```
-Node.js + Express 🚀 | MongoDB 🗄️ | JWT + Middleware Auth 🔐
+Node.js + Express 5 🚀 | MongoDB + Mongoose 🗄️ | JWT + HTTP-only Cookies 🔐
 ```
 
 ### Security & Cryptography
 ```
-Web Crypto API | AES-GCM | bcryptjs for password hashing
+Web Crypto API | AES-GCM | bcrypt | Zod | express-rate-limit | Supertest | MongoDB Memory Server
 ```
 
 ---
@@ -48,11 +52,18 @@ Web Crypto API | AES-GCM | bcryptjs for password hashing
 - **Security fundamentals** - encryption, secure cookie handling, CORS
 
 ### 🏗️ Architecture Decisions
-- ✅ Client-side encryption ensures the server never handles plaintext data
-- ✅ HTTP-only cookies prevent XSS attacks on auth tokens
-- ✅ Separated concerns: API layer, crypto utilities, page components
-- ✅ RESTful API design with proper status codes and error messages
 
+- ✅ **Client-side encryption** keeps plaintext vault contents outside the server's storage layer.
+- ✅ **JWTs in HTTP-only cookies** keep authentication tokens inaccessible to client-side JavaScript.
+- ✅ **Validation at the API boundary** uses Zod before controller logic executes, reducing invalid-input handling inside business logic.
+- ✅ **Cursor-based pagination** is used for vault reads instead of offset pagination, allowing the API to fetch bounded result sets using a stable `_id` cursor.
+- ✅ **Limit + 1 pagination strategy** lets the server determine whether another page exists without requiring a separate count query.
+- ✅ **User-scoped database queries** ensure vault mutations are constrained by both the item id and the authenticated `userId`.
+- ✅ **Separation of `app.js` and `index.js`** keeps Express application configuration independent from database connection and server startup concerns, making the application easier to test.
+- ✅ **Centralized error middleware** provides a single place to normalize unexpected server errors and avoid leaking internal details to clients.
+- ✅ **Authentication rate limiting** is applied at the route layer to reduce repeated signup/login attempts.
+- ✅ **Automated API tests with an in-memory MongoDB** allow database-backed request flows to be tested without depending on a persistent development database.
+- ✅ **REST-style route organization** separates authentication and vault resources into dedicated route/controller modules.
 ---
 
 ## 🚀 Quick Start
@@ -62,14 +73,8 @@ Web Crypto API | AES-GCM | bcryptjs for password hashing
    - Client: `cd client` then `npm install`
 
 2. **Create env files**
-   - Server: `server/.env`
-     - `MONGO_URI=mongodb://127.0.0.1:27017/password_manager`
-     - `JWT_SECRET=your_long_secret_key_here_min_32_chars`
-     - `PORT=5000`
-     - `CLIENT_ORIGIN=http://localhost:5173`
-     - `NODE_ENV=development`
-   - Client: `client/.env`
-     - `VITE_API_URL=http://localhost:5000`
+    - Copy `server/.env.example` to `server/.env` and replace `JWT_SECRET` with a long random secret.
+    - Copy `client/.env.example` to `client/.env`.
 
 3. **Run locally**
    - Server: `npm run dev`
@@ -80,26 +85,37 @@ Web Crypto API | AES-GCM | bcryptjs for password hashing
 
 ## 📁 Project Structure Overview
 
-```
-├── client/                 # React + Vite Frontend
-│   ├── src/
-│   │   ├── api/           # API service layer (authApi, vaultApi)
-│   │   ├── crypto/        # AES-GCM encryption utilities
-│   │   ├── pages/         # Login & Vault pages
-│   │   └── App.jsx        # Main component
-│   └── vite.config.js
-│
-└── server/                 # Node.js + Express Backend
-    ├── src/
-    │   ├── controllers/    # Route handlers (auth, vault logic)
-    │   ├── middleware/     # Auth verification middleware
-    │   ├── models/         # MongoDB schemas (User, VaultItem)
-    │   ├── routes/         # API endpoints
-    │   └── index.js        # Server entry point
-    └── package.json
-```
 
 ---
+```md
+
+├── client/                         # React + Vite Frontend
+│   ├── public/
+│   ├── src/
+│   │   ├── api/                   # API service layer
+│   │   ├── crypto/                # Client-side AES-GCM utilities
+│   │   ├── pages/                 # Landing, Login & Vault pages
+│   │   └── App.jsx                # Main application component
+│   ├── package.json
+│   └── vite.config.js
+│
+├── server/                         # Node.js + Express Backend
+│   ├── src/
+│   │   ├── controllers/           # Authentication & vault request handlers
+│   │   ├── middleware/             # Auth, validation & centralized errors
+│   │   ├── models/                # Mongoose models
+│   │   ├── routes/                # Auth & vault API routes
+│   │   ├── schemas/               # Zod request-validation schemas
+│   │   ├── app.js                 # Express application configuration
+│   │   └── index.js               # MongoDB connection + server startup
+│   └── package.json
+│
+└── .github/
+    └── workflows/                 # CI / automated workflow configuration
+```
+
+
+
 
 ## 🔐 Security Features Explained
 
@@ -116,6 +132,24 @@ Login → Backend Verifies Credentials → JWT Created → HTTP-Only Cookie Set 
 ```
 
 ---
+
+## 🧪 Testing & Reliability
+
+The backend includes automated API-level tests using **Node's test runner, Supertest, and MongoDB Memory Server**.
+
+The test suite covers flows around:
+
+- Authentication
+- Vault item CRUD operations
+- Cursor-based pagination
+- Request validation
+- Invalid cursor handling
+- Database-backed API behavior
+
+Tests use an in-memory MongoDB instance so request flows can be exercised without relying on the developer's local MongoDB database.
+
+The server startup path is also separated from the Express application configuration, allowing the application to be imported independently during testing.
+
 
 
 ## 📚 Learning Resources Used

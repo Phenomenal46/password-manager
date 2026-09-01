@@ -8,7 +8,7 @@ import VaultItem from "../models/VaultItem.js";
  * - Returns only {encryptedData, iv} per item (no decryption happens on the server!)
  * - Client decrypts using the master password derived from login
  */
-export const getVaultItems = async (req, res) => {
+export const getVaultItems = async (req, res, next) => {
     try {
         const limit = req.query.limit;
         const cursor = req.query.cursor;
@@ -48,7 +48,7 @@ export const getVaultItems = async (req, res) => {
  * - Server validates the payload and stores it for the authenticated user
  * - Tied to user via userId extracted from JWT token
  */
-export const addVaultItem = async (req, res) => {
+export const addVaultItem = async (req, res, next) => {
     try {
         // Expect client-side encrypted payload and IV only; server never sees plaintext.
         const { encryptedData, iv } = req.body;
@@ -71,7 +71,7 @@ export const addVaultItem = async (req, res) => {
  * DELETE a vault item by id
  * - Only deletes if the item belongs to the authenticated user
  */
-export const deleteVaultItem = async (req, res) => {
+export const deleteVaultItem = async (req, res, next) => {
     try {
         const { id } = req.params;
 
@@ -95,7 +95,7 @@ export const deleteVaultItem = async (req, res) => {
  * - Client sends encrypted data and IV (server never sees plaintext)
  * - Only updates if the item belongs to the authenticated user
  */
-export const updateVaultItem = async (req, res) => {
+export const updateVaultItem = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { encryptedData, iv } = req.body;
