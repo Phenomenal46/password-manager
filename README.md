@@ -1,6 +1,6 @@
 # 🔐 VaultX Password Manager
 
-> **Zero-Knowledge Vault** — Full-stack password manager with client-side AES-256-GCM encryption and JWT authentication. Server stores only encrypted data, demonstrating zero-trust security architecture in practice.
+> **A full-stack password manager built with React, Node.js, Express, and MongoDB, designed around clear client/server boundaries, secure authentication, validated APIs, scalable vault retrieval, automated testing, and maintainable backend architecture.**
 
 ---
 
@@ -8,14 +8,15 @@
 
 | Feature | Details |
 | --- | --- |
-| 🔒 **Client-Side Encryption** | AES-256-GCM encryption in the browser; the backend stores encrypted vault payloads rather than plaintext credentials |
+| 🔒 **Client-Side Encryption** | AES-256-GCM encryption is performed in the browser; the backend stores encrypted vault payloads rather than plaintext credentials |
 | 🎫 **JWT Authentication** | JWT-based authentication stored in HTTP-only cookies with credentialed CORS support |
 | 🛡️ **Request Validation** | Zod schemas validate authentication payloads, vault payloads, and pagination query parameters at the API boundary |
 | 🔑 **Password Management** | Add, edit, delete, copy, and generate strong passwords |
 | 📄 **Cursor-Based Pagination** | Vault retrieval uses cursor-based pagination with bounded page sizes and a `nextCursor` response |
 | 🚦 **Authentication Rate Limiting** | Signup/login endpoints are rate-limited to reduce repeated authentication attempts |
-| ⚡ **Centralized Error Handling** | Unexpected application errors are routed through a shared Express error-handling middleware |
-| 🧪 **API Test Coverage** | Authentication, vault CRUD, pagination, and validation paths are exercised with automated API tests |
+| ⚡ **Centralized Error Handling** | Shared Express error middleware keeps unexpected failures consistent and avoids exposing internal server details |
+| 🧪 **Automated API Testing** | Authentication, vault CRUD, pagination, validation, and invalid-cursor flows are covered with automated tests |
+| 🔄 **Continuous Integration** | GitHub Actions runs the backend test suite on pushes to `main` and pull requests |
 | 📱 **Responsive Design** | Works seamlessly on desktop and mobile devices |
 | 🔐 **Zero-Knowledge Architecture** | Encryption/decryption responsibilities remain on the client while the server manages authenticated storage and access control |
 
@@ -33,7 +34,7 @@ React 18 + Vite ⚡ | Tailwind CSS 🎨 | Fetch API 🌐
 Node.js + Express 5 🚀 | MongoDB + Mongoose 🗄️ | JWT + HTTP-only Cookies 🔐
 ```
 
-### Security & Cryptography
+### Platform, Security & Testing
 ```
 Web Crypto API | AES-GCM | bcrypt | Zod | express-rate-limit | Supertest | MongoDB Memory Server
 ```
@@ -43,13 +44,13 @@ Web Crypto API | AES-GCM | bcrypt | Zod | express-rate-limit | Supertest | Mongo
 
 ## 📋 Project Highlights
 
-### 🎯 What I Learned
-- **Full-stack development** from database to UI
-- **End-to-end encryption** implementation with Web Crypto API
-- **Secure authentication** patterns using JWT & HTTP-only cookies
-- **API design** best practices with proper error handling
-- **State management** in React for complex data flows
-- **Security fundamentals** - encryption, secure cookie handling, CORS
+### 🎯 Engineering Highlights
+- **Full-stack architecture** — separated frontend, API, business logic, persistence, and client-side cryptography concerns
+- **API engineering** — designed REST-style endpoints with authentication, validation, pagination, ownership checks, and consistent error handling
+- **Scalable data access** — implemented cursor-based pagination with bounded page sizes instead of loading the entire vault at once
+- **Maintainable backend structure** — separated Express application setup from database connection and server startup
+- **Testing & reliability** — added API-level tests with Supertest and an isolated in-memory MongoDB environment
+- **Production-oriented workflow** — added GitHub Actions CI so backend tests run automatically on pushes and pull requests
 
 ### 🏗️ Architecture Decisions
 
@@ -64,7 +65,43 @@ Web Crypto API | AES-GCM | bcrypt | Zod | express-rate-limit | Supertest | Mongo
 - ✅ **Authentication rate limiting** is applied at the route layer to reduce repeated signup/login attempts.
 - ✅ **Automated API tests with an in-memory MongoDB** allow database-backed request flows to be tested without depending on a persistent development database.
 - ✅ **REST-style route organization** separates authentication and vault resources into dedicated route/controller modules.
+- ✅ **Automated CI validation** ensures backend tests are executed automatically for pushes to `main` and pull requests, reducing the chance of merging regressions.
 ---
+
+
+### 🧩 System Design Overview
+
+The application follows a layered full-stack architecture where each layer has a clear responsibility.
+
+```
+┌──────────────────────────────┐
+│          React Client        │
+│  UI · State · API Services   │
+│  Client-side Encryption      │
+└──────────────┬───────────────┘
+               │ HTTPS / Cookies
+               ▼
+┌──────────────────────────────┐
+│       Express API Layer      │
+│                              │
+│ Routes                       │
+│   ↓                          │
+│ Auth Middleware              │
+│   ↓                          │
+│ Validation Middleware        │
+│   ↓                          │
+│ Controllers                  │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│      MongoDB / Mongoose      │
+│                              │
+│ Users                        │
+│ Vault Items                  │
+└──────────────────────────────┘
+
+```
 
 ## 🚀 Quick Start
 
@@ -81,13 +118,17 @@ Web Crypto API | AES-GCM | bcrypt | Zod | express-rate-limit | Supertest | Mongo
    - Client: `npm run dev`
    - Open `http://localhost:5173` in your browser
 
+4. **Run backend tests**
+
+   ```bash
+   cd server
+   npm test
+
 ---
 
 ## 📁 Project Structure Overview
 
-
----
-```md
+```text
 
 ├── client/                         # React + Vite Frontend
 │   ├── public/
@@ -117,7 +158,7 @@ Web Crypto API | AES-GCM | bcrypt | Zod | express-rate-limit | Supertest | Mongo
 
 
 
-## 🔐 Security Features Explained
+## 🔐 Security & Data Handling
 
 ### End-to-End Encryption
 ```
@@ -151,16 +192,20 @@ Tests use an in-memory MongoDB instance so request flows can be exercised withou
 The server startup path is also separated from the Express application configuration, allowing the application to be imported independently during testing.
 
 
+## ⚖️ Engineering Trade-offs
 
-## 📚 Learning Resources Used
+A few design decisions were made deliberately rather than using the simplest possible implementation:
 
-- Web Crypto API Documentation
-- Express.js Security Best Practices
-- MongoDB & Mongoose Patterns
-- React Hooks & State Management
-- JWT Authentication Architecture
+| Decision | Reasoning |
+| --- | --- |
+| **Cursor pagination instead of offset pagination** | Keeps vault reads bounded and avoids increasingly large offsets as the dataset grows |
+| **Client-side vault encryption** | Keeps plaintext credential contents outside the server's persistence layer |
+| **Zod middleware** | Keeps input validation separate from controller logic and provides a reusable validation boundary |
+| **`app.js` / `index.js` separation** | Makes application configuration independently testable and keeps infrastructure startup concerns isolated |
+| **In-memory MongoDB for tests** | Makes API tests reproducible without requiring a persistent local database |
+| **Route-level rate limiting** | Protects authentication entry points without coupling rate-limit logic to controller implementation |
 
----
+
 
 
 <div align="center">
